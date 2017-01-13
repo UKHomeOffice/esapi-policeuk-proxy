@@ -74,19 +74,13 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
         {
             route: "forces[{integers:indices}]",
             get: function(pathset) {
-                console.log("forces requested");
-                console.log("forces pathSet", pathset);
                 return request({uri: "http://data.police.uk/api/forces", json: true}).then(function(resp) {
-                    console.log('forces response was ', resp);
                     return pathset.indices.map(function(index){
                         var id = resp[index].id;
                         var r =  {
                             path: ['forces', index],
-                            value: resp[index] ? $ref(["forcesById", id]): $error("Unknown force index")
+                            value: resp[index] ? $ref(["forcesById", id]): $error("Unknown force index" + index)
                         };
-                        console.log("index", index);
-                        console.log("index/id is", id);
-                        console.log("r is:", r);
                         return r;
                     });
                 });
@@ -95,26 +89,50 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
         {
             route: "forcesById[{keys:ids}]['id', 'name']",
             get: function(pathset) {
-                console.log("forcesById pathSet", pathset);
                 var attributes = pathset[2];
-                console.log("attributes", attributes);
                 return request({uri: "http://data.police.uk/api/forces", json: true}).then(function(resp) {
-                    console.log('forcesById response was ', resp);
                     var forcesById = _.keyBy(resp, 'id');
                     var resultCollection = pathset.ids.map(function(id){
-                        console.log('forcesById, looking up', id);
-                        console.log('focesById in ', forcesById);
-                        var r =  attributes.map(function(attribute) {
+                        return attributes.map(function(attribute) {
                             var myid = id;
                             return {
                                 path: ['forcesById', myid, attribute],
                                 value: forcesById[myid] ? forcesById[myid][attribute] : $error("Unknown force id: " + myid)
                             };
                         });
-                        console.log("r is:", JSON.stringify(r, null, 2));
-                        return r;
                     });
 
+                    return _.flatten(resultCollection);
+                });
+            }
+        },
+        {
+            route: "forcesById[{keys:ids}]['description']",
+            get: function(pathset) {
+                console.log("forcesById[{keys:ids}]['description']");
+                var r = pathset.ids.map(function(id){
+                    return {
+                        path: ['forcesById', id, "description"],
+                        value: "this thing right here " + id
+                    };
+                });
+                console.log("forcesById r", r);
+                return r;
+            }
+        },
+        {
+            route: "forceDetailsById[{keys:ids}]['description', 'url', 'telephone']",
+            get: function(pathset) {
+                var attributes = pathset[2];
+                var resultCollection = pathset.ids.map(function(id){
+                    return request({uri: "http://data.police.uk/api/forces/" + id, json: true}).then(function(resp) {
+                        console.log("forceDetailsById ", resp);
+                        return attributes.map(function(attribute) {
+                            return {
+                                path: ['forceDetailsById', id, attribute],
+                                value: resp[attribute]
+                            };});
+                    });
                     return _.flatten(resultCollection);
                 });
             }
