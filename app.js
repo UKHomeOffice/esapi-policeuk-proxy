@@ -55,18 +55,19 @@ pieces.
 //       }
 //     ]
 //   }
-// });
+// })
+;
 
 // model
-//   We want the name and description values for the first three items
-//   from the data model
-// .get(["events", {from: 0, to: 2}, ["name", "description"]])
-//   To get the values on the "location" object, we need to pass the paths for the
-//   keys on that object
-  // .get(["events", {from: 0, to: 2}, ["name", "description", "location"],["city", "state"]])
-  // .then(function(response) {
-  //   document.getElementById("event-data").innerHTML = JSON.stringify(response, null, 2);
-  // });
+//   // We want the name and description values for the first three items
+//   // from the data model
+// // .get(["events", {from: 0, to: 2}, ["name", "description"]])
+//   // To get the values on the "location" object, we need to pass the paths for the
+//   // keys on that object
+//   .get(["events", {from: 0, to: 2}, ["name", "description", "location"],["city", "state"]])
+//   .then(function(response) {
+//     document.getElementById("event-data").innerHTML = JSON.stringify(response, null, 2);
+//   });
 
 // model
 //       // We set the value of the first occurrence of Utah to UT
@@ -84,8 +85,8 @@ pieces.
 /* === Step 2 === */
 
 // We can use the shorthand for references with a variable
-// var $ref = falcor.Model.ref;
-//
+// var $ref = f// alcor.Model.ref;
+
 // var model = new falcor.Model({
 //   cache: {
 //     locationsById: {
@@ -135,7 +136,6 @@ pieces.
 //     ]
 //   }
 // });
-//
 
 // model
 //   // Now when we set Utah to UT for the first occurrence, it is changed everywhere else
@@ -154,16 +154,17 @@ pieces.
 // We can set the model to have a data source that is retrieved from the backend
 // over HTTP by setting the soure to be a falcor.HttpDataSource.
 var model = new falcor.Model({source: new falcor.HttpDataSource('/model.json')});
-  // .get(["events", {from: 0, to: 2}, ["name", "description"]])
-  // .get([
-  //   "events", {from: 0, to: 2}, ["name", "description"]
-  // ],
-  // [
-  //   'events', {from: 0, to: 2}, 'location', ['city', 'state']
-  // ])
+// model
+//   // .get(["events", {from: 0, to: 2}, ["name", "description"]])
+//   .get([
+//     "events", {from: 0, to: 2}, ["name", "description"]
+//   ],
+//   [
+//     'events', {from: 0, to: 2}, 'location', ['city', 'state']
+//   ])
 // model
 //   .get(["events", {from: 0, to: 2}, ["name", "description", "location"],["city", "state"]])
-//
+
 //   .then(function(response) {
 //     document.getElementById('event-data').innerHTML = JSON.stringify(response, null, 2);
 //   });
@@ -178,3 +179,23 @@ model
     console.log(err);
     // console.log(err['0'].value.message);
   });
+
+
+model
+    .get(["forces", {from: 0, to: 3}, ["id", "name"]])
+    .then(function(response) {
+        document.getElementById('forces-data').innerHTML = JSON.stringify(response, null, 2);
+    }, function(err) {
+        console.log(err);
+        // console.log(err['0'].value.message);
+    });
+
+model
+    .get(["forcesById", ["avon-and-somerset", "city-of-london", "metropolitan"], ["name"]])
+    .then(function(response) {
+        document.getElementById('forces-data2').innerHTML = JSON.stringify(response, null, 2);
+    }, function(err) {
+        console.log(err);
+        document.getElementById('forces-data2').innerHTML = JSON.stringify(err, null, 2);
+        // console.log(err['0'].value.message);
+    });
