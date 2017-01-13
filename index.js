@@ -118,7 +118,7 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
                         return attributes.map(function(attribute) {
                             return {
                                 path: ['forcesById', id, attribute],
-                                value: resp[attribute] ? resp[attribute] : $error("No description for force " + id)
+                                value: resp[attribute]
                             };});
                     });
                 });
