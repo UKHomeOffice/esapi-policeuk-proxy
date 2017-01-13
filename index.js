@@ -110,14 +110,22 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
             route: "forcesById[{keys:ids}]['description']",
             get: function(pathset) {
                 console.log("forcesById[{keys:ids}]['description']");
-                var r = pathset.ids.map(function(id){
-                    return {
-                        path: ['forcesById', id, "description"],
-                        value: "this thing right here " + id
-                    };
+                var attributes = [pathset[2]];
+                console.log("attributes requested: ", attributes);
+                var resultPromiseCollection = pathset.ids.map(function(id){
+                    return request({uri: "http://data.police.uk/api/forces/" + id, json: true}).then(function(resp) {
+                        console.log("forcesById detail:" + id, resp);
+                        return attributes.map(function(attribute) {
+                            return {
+                                path: ['forcesById', id, attribute],
+                                value: resp[attribute] ? resp[attribute] : $error("No description for force " + id)
+                            };});
+                    });
                 });
-                console.log("forcesById r", r);
-                return r;
+                return Promise.all(resultPromiseCollection).then(function(resultCollection) {
+                    console.log("description return is: ", JSON.stringify(resultCollection, null, 2));
+                    return _.flatten(resultCollection);
+                });
             }
         },
         {
@@ -130,7 +138,7 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
                         return attributes.map(function(attribute) {
                             return {
                                 path: ['forceDetailsById', id, attribute],
-                                value: resp[attribute]
+                                value: resp[attribute] ? resp[attribute] : $error("No description for force " + id)
                             };});
                     });
                     return _.flatten(resultCollection);

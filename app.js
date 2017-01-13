@@ -225,7 +225,7 @@ model
     });
 
 model
-    .get(["forces", {from: 20, to: 24}, ["name", "description", "id"]])
+    .get(["forces", {from: 3, to: 5}, ["name", "description", "id"]])
     .then(function(response) {
         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
     }, function(err) {
