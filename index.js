@@ -129,19 +129,144 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
             }
         },
         {
-            route: "forceDetailsById[{keys:ids}]['description', 'url', 'telephone']",
+            route: "forcesById[{keys:ids}]['engagement_methods']",
+            get: function(pathset){
+                console.log("forcesById[{keys:ids}]['engagement_methods']");
+                var r = pathset.ids.map(function(id) {
+                    return {
+                        path: ['forcesById', id, 'engagement_methods'],
+                        value: $ref(['engagementMethods', id])
+                    };
+                });
+                console.log("forcesById[{keys:ids}]['engagement_methods'] will ret" + JSON.stringify(r, null, 2));
+                return r;
+            }
+        },
+        {
+            route: "engagementMethods[{keys:forceIds}][{integers:idx}]['url', 'type', 'description', 'title']",
             get: function(pathset) {
+                console.log("engagementMethods[{keys:forceIds}]['url', 'type', 'description', 'title']");
                 var attributes = pathset[2];
-                var resultCollection = pathset.ids.map(function(id){
+                console.log("attributes requested: ", attributes);
+                var resultPromiseCollection = pathset.forceIds.map(function(id){
+                    console.log("requesting engmethods: " + id);
                     return request({uri: "http://data.police.uk/api/forces/" + id, json: true}).then(function(resp) {
-                        console.log("forceDetailsById ", resp);
-                        return attributes.map(function(attribute) {
-                            return {
-                                path: ['forceDetailsById', id, attribute],
-                                value: resp[attribute] ? resp[attribute] : $error("No description for force " + id)
-                            };});
+                        console.log("engagementMethods response detail:" + id, resp);
+                        var eng_methods = resp['engagement_methods'];
+                        return pathset.idx.map(function(methodIdx) {
+                            return attributes.map(function(attribute) {
+                                var eng_method = eng_methods[methodIdx];
+                                console.log("bobo", eng_method);
+                                return {
+                                    path: ['engagementMethods', id, methodIdx, attribute],
+                                    value: eng_method[attribute]
+                                };});
+                        });
                     });
-                    return _.flatten(resultCollection);
+                });
+                return Promise.all(resultPromiseCollection).then(function(resultCollection) {
+                    var flatResultCollection = _.flatten(resultCollection);
+                    console.log("engagement methods return is: ", JSON.stringify(flatResultCollection, null, 2));
+                    return flatResultCollection;
+                });
+            }
+        },
+        {
+            route: "neighbourhoods[{integers:indices}]",
+            get: function(pathset) {
+            }
+        },
+        {
+            route: "neighbourhoodByForceId[{keys:forceIds}][{integers:neighbourhoodIndices}]",
+            get: function(pathset) {
+                var requestPromises = pathset.forceIds.map(function(forceId) {
+                    return pathset.neighbourhoodIndices.map(function(nIdx) {
+                        var result = request({uri: "http://data.police.uk/api/" + forceId + "/neighbourhoods", json: true}).then(function(resp){
+                            console.log("resp:neighbourhoodByForceId[{keys:forceIds}][{integers:neighbourhoodIndices}]", forceId,
+                                        nIdx, JSON.stringify(resp, null, 2));
+                            return {
+                                path: ["neighbourhoodByForceId", forceId, nIdx],
+                                value: resp[nIdx] ? $ref(['neighbourhoodByForceIdAndCode', forceId, resp[nIdx].id]) : $error("No neighbourhood for idx: " + nIdx)
+                            };
+                        });
+                        return result;
+                    });
+                });
+                var flatRequestPromises = _.flatten(requestPromises);
+                return Promise.all(flatRequestPromises).then(function(allResps) {
+                    console.log("Neighborhood all", JSON.stringify(allResps, null, 2)) ;
+                    return allResps;
+                });
+            }
+        },
+        {
+            route: "neighbourhoodByForceIdAndCode[{keys:forceIds}][{keys:nCodes}]['location']",
+            get: function(pathset) {
+                var rCollection = pathset.forceIds.map(function(forceId) {
+                    return pathset.nCodes.map(function(nCode) {
+                        return {
+                            path: ["neighbourhoodByForceIdAndCode", forceId, nCode, 'location'],
+                            value: $ref(['locationsByForceIdAndCode', forceId, nCode ])
+                        };
+                    });
+                });
+                return _.flatten(rCollection);
+            }
+        },
+        {
+            route: "neighbourhoodByForceIdAndCode[{keys:forceIds}][{keys:nCodes}]['url_force','name','population']",
+            get: function(pathset) {
+                var requestPromises = pathset.forceIds.map(function(forceId) {
+                    return pathset.nCodes.map(function(nCode) {
+                        var result = request({uri: "http://data.police.uk/api/" + forceId + "/" + nCode}).then(function(resp){
+                            console.log("neighbourhoods by ForceId and code", pathset, resp);
+                            var respByCode = _.keyBy('id');
+                            return {
+                                path: ["neighbourhoodByForceIdAndCode", forceId, nCode],
+                                value: resp[nIdx] ? $ref(['neighbourhoodByForceIdAndCode', forceId, resp[nIdx].id]) : $error("No neighbourhood for idx: " + nIdx)
+                            };
+                        });
+                        return result;
+                    });
+                });
+                var flatRequestPromises = _.flattenRequest(requestPromises);
+                return Promise.all(flatRequestPromises).then(function(allResps) {
+                    console.log("Neighborhood all", allResps) ;
+                    return allResps;
+                });
+            }
+        },
+        {
+            route: "locationsByForceIdAndCode[{keys:forceIds}][{keys:nCodes}][{integers:indices}]['name', 'longitude', 'postcode', 'address', 'latitude', 'type', 'description']",
+            get: function(pathset){
+                var attributes = pathset[4];
+                console.log("locAttrs", attributes);
+                var requestPromises = pathset.forceIds.map(function(forceId) {
+                    return pathset.nCodes.map(function(nCode) {
+                        var result = request({uri: "http://data.police.uk/api/" + forceId + "/" + nCode, json: true}).then(function(resp){
+                            console.log("locationsByForceIdAndCode pathset:", pathset,"response:", resp, attributes);
+                            var individualAttrs = pathset.indices.map(function(idx) {
+                                return attributes.map(function(attribute) {
+                                    return {
+                                        path: ["locationsByForceIdAndCode", forceId, nCode, idx, attribute],
+                                        value: resp['locations'][idx][attribute]
+                                    };
+                                });
+                            });
+                            var flattenedAttrs =  _.flatten(individualAttrs);
+                            console.log('flattenedAttrs', flattenedAttrs);
+                            return flattenedAttrs;
+                        });
+                        console.log("tfw", result);
+                        return result;
+                    });
+                });
+                console.log("wtf, ", requestPromises);
+                var flatRequestPromises = _.flatten(requestPromises);
+                console.log("wtflat, ", flatRequestPromises);
+                return Promise.all(flatRequestPromises).then(function(allResps) {
+                    console.log("Neighborhood all", allResps) ;
+                    return _.flatten(allResps);
                 });
             }
         },

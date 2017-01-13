@@ -224,12 +224,50 @@ model
         // console.log(err['0'].value.message);
     });
 
+// // locations work directly
 model
-    .get(["forces", {from: 0, to: 5}, ["name", "description", "id"]])
+    .get(
+        ["neighbourhoodByForceId",
+         ["metropolitan"], {from: 0, to: 10}, ["location"], [0],
+         ["address","postcode", "population"]])
     .then(function(response) {
         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
     }, function(err) {
         console.log(err);
-        document.getElementById('forces-data2').innerHTML = JSON.stringify(err, null, 2);
+        document.getElementById('forces-data3').innerHTML = JSON.stringify(err, null, 2);
         // console.log(err['0'].value.message);
     });
+
+
+// // locations work directly
+// model
+//     .get(
+//         ["locationsByForceIdAndCode", ["metropolitan"], ["cp"] , 0, ["address","postcode", "population"]])
+//     .then(function(response) {
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log(err);
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(err, null, 2);
+//         // console.log(err['0'].value.message);
+//     });
+// model
+//     .get(
+//         ["forces", {from: 0, to: 5}, ["description", "engagement_methods"], 1, ["url"]])
+//     .then(function(response) {
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log(err);
+//         document.getElementById('forces-data2').innerHTML = JSON.stringify(err, null, 2);
+//         // console.log(err['0'].value.message);
+//     });
+// model
+//     .get(
+//         ["forces", {from: 0, to: 5}, ["name", "description", "id"]],
+//         ["forces", {from: 0, to: 5}, ["engagement_methods"], ["url"]])
+//     .then(function(response) {
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log(err);
+//         document.getElementById('forces-data2').innerHTML = JSON.stringify(err, null, 2);
+//         // console.log(err['0'].value.message);
+//     });
