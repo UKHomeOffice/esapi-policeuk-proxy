@@ -49,63 +49,6 @@ var localmodel = new falcor.Model({
     }
 });
 
-var localmodelid = new falcor.Model({
-    cache: {
-        forcesById: {
-            "44": {
-                name: "Avon and Somerset Constabulary",
-                description: [ {$type: "ref", value: ["dbi", 44]}]
-            },
-            "45": {
-                name: "City of London Police",
-                description: [$ref("dbi[44]")]
-            }
-        },
-        dbi: {
-            "45": "Yo yo",
-            "44": "City Police",
-            "city-of-madup": "mdup"
-        },
-        forces: [
-            $ref("forcesById['44']") ,
-            $ref("forcesById['45']")
-        ]
-    }
-});
-// localmodel
-// // We want the name and description values for the first three items
-// // from the data model
-// // .get(["events", {from: 0, to: 2}, ["name", "description"]])
-// // To get the values on the "location" object, we need to pass the paths for the
-// // keys on that object
-//     .get(["forces", {from: 0, to: 1}, ["name", "description"]])
-//     .then(function(response) {
-//         document.getElementById("forces-data").innerHTML = JSON.stringify(response, null, 2);
-//     });
-
-localmodelid
-// We want the name and description values for the first three items
-// from the data model
-// .get(["events", {from: 0, to: 2}, ["name", "description"]])
-// To get the values on the "location" object, we need to pass the paths for the
-// keys on that object
-    .get(["forcesById", ["44", "45"], ["name", "description"]])
-    .then(function(response) {
-        document.getElementById("forces-data").innerHTML = JSON.stringify(response, null, 2);
-    });
-
-// model
-//       // We set the value of the first occurrence of Utah to UT
-//   .set(falcor.pathValue(["events", 0, "location", "state"], 'UT'))
-//   .then(function(response) {
-//     model
-//     // What we find afterwards is that the value gets changed in one location, but not both.
-//       .get(["events", {from: 0, to: 2}, ["name", "description", "location"],["city", "state"]])
-//       .then(function(response) {
-//         document.getElementById('event-data').innerHTML = JSON.stringify(response, null, 2);
-//       });
-//   });
-
 
 /* === Step 2 === */
 
@@ -214,29 +157,98 @@ model
 //         // console.log(err['0'].value.message);
 //     });
 
+// model
+//     .get(["forcesById", ["avon-and-somerset", "city-of-london", "metropolitan"], ["name", "description"]])
+//     .then(function(response) {
+//         document.getElementById('forces-data2').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log(err);
+//         document.getElementById('forces-data2').innerHTML = JSON.stringify(err, null, 2);
+//         // console.log(err['0'].value.message);
+//     });
+
+
+//// peopleByForceIdAndNeighbourhoodCode
+// model
+//     .get(
+//         ["peopleByForceIdAndNeighbourhoodCode", ["leicestershire"], ["NC04"], [0, 1, 2], ["bio", "name", "rank"]])
+//         //,"latitude", "longitude", "type", "population"]])
+//     .then(function(response) {
+//         console.log('got response', response);
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log('error', err);
+//         document.getElementById('forces-data3').innerHTML = "<h3>Error</h3>" + JSON.stringify(err, null, 2);
+//         // console.log(err['0'].value.message);
+//     });
 model
-    .get(["forcesById", ["avon-and-somerset", "city-of-london", "metropolitan"], ["name", "description"]])
+    .get(
+        ["forces", {from: 0, to: 20}, ["name", "description", "neighbourhoods"], {from: 0, to: 10}, ["id", "name"]]
+    )
     .then(function(response) {
-        document.getElementById('forces-data2').innerHTML = JSON.stringify(response, null, 2);
+        console.log('got response', response);
+        document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
     }, function(err) {
-        console.log(err);
-        document.getElementById('forces-data2').innerHTML = JSON.stringify(err, null, 2);
+        console.log('error', err);
+        document.getElementById('forces-data3').innerHTML = "<h3>Error</h3>" + JSON.stringify(err, null, 2);
         // console.log(err['0'].value.message);
     });
 
-// // locations work directly
-model
-    .get(
-        ["neighbourhoodByForceId",
-         ["metropolitan"], {from: 0, to: 10}, ["location"], [0],
-         ["address","postcode", "population"]])
-    .then(function(response) {
-        document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
-    }, function(err) {
-        console.log(err);
-        document.getElementById('forces-data3').innerHTML = JSON.stringify(err, null, 2);
-        // console.log(err['0'].value.message);
-    });
+//// getting to people via force.neighbourhood
+// model
+//     .get(
+//         ["forces", {from: 0, to: 5}, ["id","name","neighbourhoods"], {from: 0, to: 2},["people"],{from: 0, to: 1}, ["bio", "name", "rank"]],
+//         ["forces", {from: 8, to: 10}, ["id","name", "neighbourhoods"], {from: 0, to: 2},["people"],{from: 0, to: 1}, ["bio", "name", "rank"]])
+// //,"latitude", "longitude", "type", "population"]])
+//     .then(function(response) {
+//         console.log('got response', response);
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log('error', err);
+//         document.getElementById('forces-data3').innerHTML = "<h3>Error</h3>" + JSON.stringify(err, null, 2);
+//         // console.log(err['0'].value.message);
+//     });
+// model
+//     .get(
+//         [["forcesById"], ["leicestershire"] , ["neighbourhoods"], "NC04", ["people"], ["bio"]],
+//         ["forces",{from: 5, to: 10}, ["neighbourhoods", "description", "id"], {from: 0, to: 1}, ["location"], [0],
+//          ["address","postcode"]])
+//         //,"latitude", "longitude", "type", "population"]])
+//     .then(function(response) {
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log(err);
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(err, null, 2);
+//         // console.log(err['0'].value.message);
+//     });
+
+// stations by forceidx and neighbourhood, kinda works
+// model
+//     .get(
+//         ["force",
+//          [2, 3, 7], ["neighbourhoods", "description", "id"], [0, 1, 2], ["location"], [0],
+//          ["address","postcode", "population"]])
+//     .then(function(response) {
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log(err);
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(err, null, 2);
+//         // console.log(err['0'].value.message);
+//     });
+
+// stations by forceid and neighbourhood
+// model
+//     .get(
+//         ["neighbourhoodByForceId",
+//          ["metropolitan"], {from: 0, to: 10}, ["location"], [0],
+//          ["address","postcode", "population"]])
+//     .then(function(response) {
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log(err);
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(err, null, 2);
+//         // console.log(err['0'].value.message);
+//     });
 
 
 // // locations work directly
@@ -250,9 +262,10 @@ model
 //         document.getElementById('forces-data3').innerHTML = JSON.stringify(err, null, 2);
 //         // console.log(err['0'].value.message);
 //     });
+
 // model
 //     .get(
-//         ["forces", {from: 0, to: 5}, ["description", "engagement_methods"], 1, ["url"]])
+//         ["forces", {from: 0, to: 5}, ["id", "description", "engagement_methods"], 1, ["url"]])
 //     .then(function(response) {
 //         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
 //     }, function(err) {

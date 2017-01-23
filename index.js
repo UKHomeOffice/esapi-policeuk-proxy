@@ -14,6 +14,7 @@ var app = express();
 app.use(express.static('.'));
 
 var $ref = falcor.Model.ref;
+var pprint = function(o) { return JSON.stringify(o, null, 2);};
 
 // Same data that was used in the view for our
 // events, but this time on a simple object
@@ -97,7 +98,7 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
                             var myid = id;
                             return {
                                 path: ['forcesById', myid, attribute],
-                                value: forcesById[myid] ? forcesById[myid][attribute] : $error("Unknown force id: " + myid)
+                                value: forcesById[myid] ? forcesById[myid][attribute] : null //$error("Unknown force id: " + myid)
                             };
                         });
                     });
@@ -143,6 +144,20 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
             }
         },
         {
+            route: "forcesById[{keys:ids}]['neighbourhoods']",
+            get: function(pathset){
+                console.log("forcesById[{keys:ids}]['neighbourhoods']", pathset);
+                var r = pathset.ids.map(function(id) {
+                    return {
+                        path: ['forcesById', id, 'neighbourhoods'],
+                        value: $ref(['neighbourhoodByForceId', id])
+                    };
+                });
+                console.log("forcesById[{keys:ids}]['neighbourhoods'] will ret" + JSON.stringify(r, null, 2));
+                return r;
+            }
+        },
+        {
             route: "engagementMethods[{keys:forceIds}][{integers:idx}]['url', 'type', 'description', 'title']",
             get: function(pathset) {
                 console.log("engagementMethods[{keys:forceIds}]['url', 'type', 'description', 'title']");
@@ -172,13 +187,9 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
             }
         },
         {
-            route: "neighbourhoods[{integers:indices}]",
-            get: function(pathset) {
-            }
-        },
-        {
             route: "neighbourhoodByForceId[{keys:forceIds}][{integers:neighbourhoodIndices}]",
             get: function(pathset) {
+                console.log("req: neighbourhoodByForceId[{keys:forceIds}][{integers:neighbourhoodIndices}]", pathset);
                 var requestPromises = pathset.forceIds.map(function(forceId) {
                     return pathset.neighbourhoodIndices.map(function(nIdx) {
                         var result = request({uri: "http://data.police.uk/api/" + forceId + "/neighbourhoods", json: true}).then(function(resp){
@@ -186,7 +197,7 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
                                         nIdx, JSON.stringify(resp, null, 2));
                             return {
                                 path: ["neighbourhoodByForceId", forceId, nIdx],
-                                value: resp[nIdx] ? $ref(['neighbourhoodByForceIdAndCode', forceId, resp[nIdx].id]) : $error("No neighbourhood for idx: " + nIdx)
+                                value: resp[nIdx] ? $ref(['neighbourhoodByForceIdAndCode', forceId, resp[nIdx].id]) : null //$error("No neighbourhood for idx: " + nIdx)
                             };
                         });
                         return result;
@@ -214,11 +225,61 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
             }
         },
         {
+            route: "neighbourhoodByForceIdAndCode[{keys:forceIds}][{keys:nCodes}]['people']",
+            get: function(pathset) {
+                var rCollection = pathset.forceIds.map(function(forceId) {
+                    return pathset.nCodes.map(function(nCode) {
+                        return {
+                            path: ["neighbourhoodByForceIdAndCode", forceId, nCode, 'people'],
+                            value: $ref(['peopleByForceIdAndNeighbourhoodCode', forceId, nCode ])
+                        };
+                    });
+                });
+                return _.flatten(rCollection);
+            }
+        },
+        {
+            route: "peopleByForceIdAndNeighbourhoodCode[{keys:forceIds}][{keys:nCodes}][{integers:personIndices}]['bio', 'rank', 'name']",
+            get: function(pathset) {
+                var attributes = pathset[4];
+                console.log("\n\npathset: ", pprint(pathset));
+                console.log("attributes", pprint(attributes));
+                var requestPromises = pathset.forceIds.map(function(forceId) {
+                    return pathset.nCodes.map(function(nCode) {
+                        var result = request({uri: "http://data.police.uk/api/" + forceId + "/" + nCode + "/people", json: true}).then(function(resp){
+                            var peopleAttributePaths = pathset.personIndices.map(function(idx) {
+                                console.log("respTo" + pathset[0], forceId, nCode, pprint(pathset), pprint(resp));
+                                return attributes.map(function(attribute) {
+                                    console.log("evaluating " + idx + " " + attribute, resp);
+                                    var attrValue = resp[idx] && resp[idx][attribute] ? resp[idx][attribute] :null; // $error("No person." + attribute + " for " + pprint(pathset) +  "for idx: " + idx);
+                                    console.log("will set", attrValue);
+                                    var individualAttr = {
+                                        path: ["peopleByForceIdAndNeighbourhoodCode", forceId, nCode, idx, attribute],
+                                        value: attrValue 
+                                    };
+                                    console.log(pathset[0], "individualAttr", individualAttr);
+                                    return individualAttr;
+                                });
+                            });
+                            return _.flatten(peopleAttributePaths);
+                        });
+                        return result;
+                    });
+                });
+                var flatRequestPromises = _.flatten(requestPromises);
+                return Promise.all(flatRequestPromises).then(function(allResps) {
+                    var flattened = _.flatten(allResps);
+                    console.log("peopleByForceIdAndNeighbourhoodCode allResps: ", pprint(flattened)) ;
+                    return flattened; 
+                });
+            }
+        },
+        {
             route: "neighbourhoodByForceIdAndCode[{keys:forceIds}][{keys:nCodes}]['url_force','name','population']",
             get: function(pathset) {
                 var requestPromises = pathset.forceIds.map(function(forceId) {
                     return pathset.nCodes.map(function(nCode) {
-                        var result = request({uri: "http://data.police.uk/api/" + forceId + "/" + nCode}).then(function(resp){
+                        var result = request({uri: "http://data.police.uk/api/" + forceId + "/" + nCode, json: true}).then(function(resp){
                             console.log("neighbourhoods by ForceId and code", pathset, resp);
                             var respByCode = _.keyBy('id');
                             return {
@@ -229,7 +290,7 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
                         return result;
                     });
                 });
-                var flatRequestPromises = _.flattenRequest(requestPromises);
+                var flatRequestPromises = _.flatten(requestPromises);
                 return Promise.all(flatRequestPromises).then(function(allResps) {
                     console.log("Neighborhood all", allResps) ;
                     return allResps;

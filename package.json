@@ -14,9 +14,9 @@
   "dependencies": {
     "debug": "^2.6.0",
     "express": "^4.13.3",
-    "falcor": "^0.1.12",
+    "falcor": "^0.1.17",
     "falcor-express": "^0.1.2",
-    "falcor-router": "^0.2.9",
+    "falcor-router": "^0.5.2",
     "lodash": "^4.0.0",
     "request": "^2.79.0"
   }
