@@ -4,7 +4,8 @@ var Model = falcor.Model;
 var $error = Model.error;
 
 var Router = require('falcor-router');
-var request = require('request-promise');
+var realrequest = require('request-promise');
+//var cacherequest = require('request-promise-cache');
 
 var express = require('express');
 var _ = require('lodash');
@@ -15,6 +16,22 @@ app.use(express.static('.'));
 
 var $ref = falcor.Model.ref;
 var pprint = function(o) { return JSON.stringify(o, null, 2);};
+
+var cache = {};
+
+var request = function(r) {
+    if (cache[r.uri]) {
+        console.log("found " + r.uri + " in cache");
+        return cache[r.uri];
+    }
+    console.log("Should request " + pprint(r));
+    var p = realrequest(r);
+    cache[r.uri] = p;
+    p.then(function(resp) {
+        console.log(r.uri + " resp " + pprint(resp));
+    });
+    return p;
+};
 
 // Same data that was used in the view for our
 // events, but this time on a simple object
@@ -67,6 +84,7 @@ var eventsData = {
     ]
 }
 
+
 // We setup a model.json endpoint and pass it a dataSourceRoute which
 // allows us to serve a router. Various route requests can be sent to the
 // router to request whatever data is required
@@ -84,6 +102,36 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
                         };
                         return r;
                     });
+                });
+            }
+        },
+        {
+            route: "forces.byName[{keys}][\"name\"]",
+            get: function(pathset) {
+                console.log(pprint(pathset));
+
+                return request({uri: "http://data.police.uk/api/forces", json: true}).then(function(resp) {
+                    var searchTerms = pathset[2];
+                    var ret = [];
+                    searchTerms.forEach(function(searchTerm) {
+                        resp.map(function(force) {
+                            if (force.id.includes(searchTerm))
+                            {
+                                var path = {
+                                    path: ['forces', 'byName', searchTerm, 'name' ],
+                                    value: force.name 
+                                };
+                                ret.push(path);
+                                var path2 = {
+                                    path: ['forces', 'byName', searchTerm, 'id' ],
+                                    value: force.id
+                                };
+                                ret.push(path2);
+                            }
+                        });
+                    });
+                    console.log("forces.byName return: " + pprint(ret));
+                    return ret;
                 });
             }
         },
@@ -255,7 +303,7 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
                                     console.log("will set", attrValue);
                                     var individualAttr = {
                                         path: ["peopleByForceIdAndNeighbourhoodCode", forceId, nCode, idx, attribute],
-                                        value: attrValue 
+                                        value: attrValue
                                     };
                                     console.log(pathset[0], "individualAttr", individualAttr);
                                     return individualAttr;
@@ -270,7 +318,7 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
                 return Promise.all(flatRequestPromises).then(function(allResps) {
                     var flattened = _.flatten(allResps);
                     console.log("peopleByForceIdAndNeighbourhoodCode allResps: ", pprint(flattened)) ;
-                    return flattened; 
+                    return flattened;
                 });
             }
         },
@@ -330,90 +378,89 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
                     return _.flatten(allResps);
                 });
             }
-        },
-        {
-            // Our route needs to match a pattern of integers that
-            // are used as eventIds
-            route: "events[{integers:eventIds}]['name', 'description', 'location']",
-            get: function(pathSet) {
-
-                var results = [];
-
-                // Above we specified an eventIds identifier that is an
-                // array of ids which we can loop over
-                pathSet.eventIds.forEach(function(eventId) {
-
-                    // Next, an array of key names that map is held at pathSet[2]
-                    pathSet[2].map(function(key) {
-
-                        // We find the event the cooresponds to the current eventId
-                        var eventRecord = eventsData.events[eventId];
-
-                        // Finally we push a path/value object onto
-                        // the results array
-                        results.push({
-                            path: ['events', eventId, key],
-                            value: eventRecord[key]
-                        });
-                    });
-                });
-
-                return results;
-            }
-        },
-        {
-            // Our route needs to match a pattern of integers that
-            // are used as locationId
-            route: "locationsById[{integers:locationId}]['city', 'state']",
-            get: function(pathSet) {
-
-                var results = [];
-
-                // Above we specified an locationId identifier that is an
-                // array of ids which we can loop over
-                pathSet.locationId.forEach(function(locationId) {
-
-                    // Next, an array of key names that map is held at pathSet[2]
-                    pathSet[2].map(function(key) {
-
-                        // We find the event the cooresponds to the current locationId
-                        var location = eventsData.locationsById[locationId];
-
-                        // Finally we push a path/value object onto
-                        // the results array
-                        results.push({
-                            path: ['locationsById', locationId, key],
-                            value: location[key]
-                        });
-                    });
-                });
-
-                return results;
-            }
-        },
-        {
-            // The search route will match keys that match the names
-            // of our conferences
-            route: "events.byName[{keys}]['description']",
-            get: function(pathSet) {
-
-                var results = [];
-                // We want to loop over each of the conference names provided
-                pathSet[2].forEach(function(name) {
-                    // We also want to loop over all the events on the data object
-                    // and check if conference name is there
-                    eventsData.events.forEach(function(event) {
-                        if(_.includes(event, name)) {
-                            results.push({
-                                path: ['events','byName', name, 'description'],
-                                value: event.description
-                            });
-                        }
-                    });
-                });
-                return results;
-            }
         }
+        //     // Our route needs to match a pattern of integers that
+        //     // are used as eventIds
+        //     route: "events[{integers:eventIds}]['name', 'description', 'location']",
+        //     get: function(pathSet) {
+
+        //         var results = [];
+
+        //         // Above we specified an eventIds identifier that is an
+        //         // array of ids which we can loop over
+        //         pathSet.eventIds.forEach(function(eventId) {
+
+        //             // Next, an array of key names that map is held at pathSet[2]
+        //             pathSet[2].map(function(key) {
+
+        //                 // We find the event the cooresponds to the current eventId
+        //                 var eventRecord = eventsData.events[eventId];
+
+        //                 // Finally we push a path/value object onto
+        //                 // the results array
+        //                 results.push({
+        //                     path: ['events', eventId, key],
+        //                     value: eventRecord[key]
+        //                 });
+        //             });
+        //         });
+
+        //         return results;
+        //     }
+        // },
+        // {
+        //     // Our route needs to match a pattern of integers that
+        //     // are used as locationId
+        //     route: "locationsById[{integers:locationId}]['city', 'state']",
+        //     get: function(pathSet) {
+
+        //         var results = [];
+
+        //         // Above we specified an locationId identifier that is an
+        //         // array of ids which we can loop over
+        //         pathSet.locationId.forEach(function(locationId) {
+
+        //             // Next, an array of key names that map is held at pathSet[2]
+        //             pathSet[2].map(function(key) {
+
+        //                 // We find the event the cooresponds to the current locationId
+        //                 var location = eventsData.locationsById[locationId];
+
+        //                 // Finally we push a path/value object onto
+        //                 // the results array
+        //                 results.push({
+        //                     path: ['locationsById', locationId, key],
+        //                     value: location[key]
+        //                 });
+        //             });
+        //         });
+
+        //         return results;
+        //     }
+        // },
+        // {
+        //     // The search route will match keys that match the names
+        //     // of our conferences
+        //     route: "events.byName[{keys}]['description']",
+        //     get: function(pathSet) {
+
+        //         var results = [];
+        //         // We want to loop over each of the conference names provided
+        //         pathSet[2].forEach(function(name) {
+        //             // We also want to loop over all the events on the data object
+        //             // and check if conference name is there
+        //             eventsData.events.forEach(function(event) {
+        //                 if(_.includes(event, name)) {
+        //                     results.push({
+        //                         path: ['events','byName', name, 'description'],
+        //                         value: event.description
+        //                     });
+        //                 }
+        //             });
+        //         });
+        //         return results;
+        //     }
+        // }
     ]);
 }));
 

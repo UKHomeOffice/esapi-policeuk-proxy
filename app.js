@@ -50,73 +50,7 @@ var localmodel = new falcor.Model({
 });
 
 
-/* === Step 2 === */
-
-// We can use the shorthand for references with a variable
-
-// var model = new falcor.Model({
-//   cache: {
-//     locationsById: {
-//       1: {
-//         city: "Salt Lake City",
-//         state: "Utah"
-//       },
-//       2: {
-//         city: "Las Vegas",
-//         state: "Nevada"
-//       },
-//       3: {
-//         city: "Minneapolis",
-//         state: "Minnesota"
-//       },
-//       4: {
-//         city: "Walker Creek Ranch",
-//         state: "California"
-//       }
-//     },
-//     events: [
-//       {
-//         name: "ng-conf",
-//         description: "The world's best Angular Conference",
-//         location: $ref('locationsById[1]')
-//       },
-//       {
-//         name: "React Rally",
-//         description: "Conference focusing on Facebook's React",
-//         location: $ref('locationsById[1]')
-//       },
-//       {
-//         name: "ng-Vegas",
-//         description: "Two days jam-packed with Angular goodness with a focus on Angular 2",
-//         location: $ref('locationsById[2]')
-//       },
-//       {
-//         name: "Midwest JS",
-//         description: "Midwest JS is a premier technology conference focused on the JavaScript ecosystem.",
-//         location: $ref('locationsById[3]')
-//       },
-//       {
-//         name: "NodeConf",
-//         description: "NodeConf is the longest running community driven conference for the Node community.",
-//         location: $ref('locationsById[4]')
-//       }
-//     ]
-//   }
-// });
-
-// model
-//   // Now when we set Utah to UT for the first occurrence, it is changed everywhere else
-//   .set(falcor.pathValue(["events", 0, "location", "state"], 'UT'))
-//   .then(function(response) {
-//     model
-//       .get(["events", {from: 0, to: 2}, ["name", "description", "location"],["city", "state"]])
-//       .then(function(response) {
-//         document.getElementById('event-data').innerHTML = JSON.stringify(response, null, 2);
-//       });
-//   });
-
-
-/* === Step 3 === */
+/*  Demos */
 
 // We can set the model to have a data source that is retrieved from the backend
 // over HTTP by setting the soure to be a falcor.HttpDataSource.
@@ -137,16 +71,14 @@ var model = new falcor.Model({source: new falcor.HttpDataSource('/model.json')})
 //   });
 
 // Search example - we pass "Midwest JS" which will be looked up
-// in the events data on the server and sent back if it exists
 model
-    .get(["events", "byName", ["Midwest JS"], ['description']])
+    .get(["forces", "byName", ["lei"], ["id", "name"]])
     .then(function(response) {
-        document.getElementById('event-data').innerHTML = JSON.stringify(response, null, 2);
+        document.getElementById('forces-data').innerHTML = JSON.stringify(response, null, 2);
     }, function(err) {
         console.log(err);
         // console.log(err['0'].value.message);
     });
-
 
 // model
 //     .get(["forces", {from: 0, to: 3}, ["id", "name"]])
@@ -181,25 +113,10 @@ model
 //         document.getElementById('forces-data3').innerHTML = "<h3>Error</h3>" + JSON.stringify(err, null, 2);
 //         // console.log(err['0'].value.message);
 //     });
-model
-    .get(
-        ["forces", {from: 0, to: 20}, ["name", "description", "neighbourhoods"], {from: 0, to: 10}, ["id", "name"]]
-    )
-    .then(function(response) {
-        console.log('got response', response);
-        document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
-    }, function(err) {
-        console.log('error', err);
-        document.getElementById('forces-data3').innerHTML = "<h3>Error</h3>" + JSON.stringify(err, null, 2);
-        // console.log(err['0'].value.message);
-    });
-
-//// getting to people via force.neighbourhood
 // model
 //     .get(
-//         ["forces", {from: 0, to: 5}, ["id","name","neighbourhoods"], {from: 0, to: 2},["people"],{from: 0, to: 1}, ["bio", "name", "rank"]],
-//         ["forces", {from: 8, to: 10}, ["id","name", "neighbourhoods"], {from: 0, to: 2},["people"],{from: 0, to: 1}, ["bio", "name", "rank"]])
-// //,"latitude", "longitude", "type", "population"]])
+//         ["forces", {from: 0, to: 5}, ["name", "description", "neighbourhoods"], {from: 0, to: 5}, ["id", "name"]]
+//     )
 //     .then(function(response) {
 //         console.log('got response', response);
 //         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
@@ -208,6 +125,9 @@ model
 //         document.getElementById('forces-data3').innerHTML = "<h3>Error</h3>" + JSON.stringify(err, null, 2);
 //         // console.log(err['0'].value.message);
 //     });
+
+
+// /// WIP two paths
 // model
 //     .get(
 //         [["forcesById"], ["leicestershire"] , ["neighbourhoods"], "NC04", ["people"], ["bio"]],
@@ -236,11 +156,24 @@ model
 //         // console.log(err['0'].value.message);
 //     });
 
-// stations by forceid and neighbourhood
+
+// GOOD simple details from all forces (step 2 - add description)
+// model
+//     .get(
+//         ["forces", {from: 0, to: 20} , ["id", "name", "neighbourhoods"]]) //, [0], ["location"]])
+//     .then(function(response) {
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log(err);
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(err, null, 2);
+//         // console.log(err['0'].value.message);
+//     });
+
+// GOOD stations by forceid and neighbourhood
 // model
 //     .get(
 //         ["neighbourhoodByForceId",
-//          ["metropolitan"], {from: 0, to: 10}, ["location"], [0],
+//          ["metropolitan", "leicestershire"], {from: 0, to: 2}, ["location"], [0],
 //          ["address","postcode", "population"]])
 //     .then(function(response) {
 //         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
@@ -251,10 +184,25 @@ model
 //     });
 
 
-// // locations work directly
+//// getting to people via force.neighbourhood
 // model
 //     .get(
-//         ["locationsByForceIdAndCode", ["metropolitan"], ["cp"] , 0, ["address","postcode", "population"]])
+//         ["forces", {from: 0, to: 5}, ["id","name","neighbourhoods"], {from: 0, to: 2},["people"],{from: 0, to: 1}, ["bio", "name", "rank"]],
+//         ["forces", {from: 8, to: 10}, ["id","name", "neighbourhoods"], {from: 0, to: 2},["people"],{from: 0, to: 1}, ["bio", "name", "rank"]])
+// //,"latitude", "longitude", "type", "population"]])
+//     .then(function(response) {
+//         console.log('got response', response);
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log('error', err);
+//         document.getElementById('forces-data3').innerHTML = "<h3>Error</h3>" + JSON.stringify(err, null, 2);
+//         // console.log(err['0'].value.message);
+//     });
+
+// GOOD! locations work directly
+// model
+//     .get(
+//         ["locationsByForceIdAndCode", ["leicestershire"], ["NC04"] , [0], ["address","postcode", "population"]])
 //     .then(function(response) {
 //         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
 //     }, function(err) {
@@ -263,6 +211,8 @@ model
 //         // console.log(err['0'].value.message);
 //     });
 
+
+// 500 ! gives 500
 // model
 //     .get(
 //         ["forces", {from: 0, to: 5}, ["id", "description", "engagement_methods"], 1, ["url"]])
@@ -273,10 +223,26 @@ model
 //         document.getElementById('forces-data2').innerHTML = JSON.stringify(err, null, 2);
 //         // console.log(err['0'].value.message);
 //     });
+
+var first6 = {from: 0, to: 5};
+
+// GOOD! show multiple paths
 // model
 //     .get(
-//         ["forces", {from: 0, to: 5}, ["name", "description", "id"]],
-//         ["forces", {from: 0, to: 5}, ["engagement_methods"], ["url"]])
+//         ["forcesById", ["leicestershire", "metropolitan"], ["name", "description", "id"]],
+//         ["forcesById", ["metropolitan"], ["engagement_methods"], ["url"]])
+//     .then(function(response) {
+//         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log(err);
+//         document.getElementById('forces-data2').innerHTML = JSON.stringify(err, null, 2);
+//         // console.log(err['0'].value.message);
+//     });
+
+// model
+//     .get(
+//         ["forces", {from: 0, to: 5}, ["name", "description", "id"]])
+//      //   ["forces", {from: 0, to: 5}, ["engagement_methods"], ["url"]])
 //     .then(function(response) {
 //         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
 //     }, function(err) {
