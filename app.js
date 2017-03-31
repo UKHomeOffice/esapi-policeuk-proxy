@@ -1,24 +1,5 @@
 /* --------------------------------------
-
- Below are several examples of hooking
- up a Falcor model and getting data from
- it to be displayed on the screen.
-
- Step 1: A local model cache is setup
- with some data. Data is requested with
- various get requests to the model.
-
- Step 2: We change the model over to a
- JSON Graph with references so that data
- isn't duplicated.
-
- Step 3: We move the data  over to the
- server to be served from a Falcor Router.
- This step is currently setup to run but
- you can comment it out and start from
- Step 1 by uncommenting the appropriate
- pieces.
-
+ A simple demonstration of using Falcor to proxy and existing 'RestISH' api. 
  ----------------------------------------*/
 
 var $ref = falcor.Model.ref;
@@ -71,14 +52,14 @@ var model = new falcor.Model({source: new falcor.HttpDataSource('/model.json')})
 //   });
 
 // Search example - we pass "Midwest JS" which will be looked up
-model
-    .get(["forces", "byName", ["lei"], ["id", "name"]])
-    .then(function(response) {
-        document.getElementById('forces-data').innerHTML = JSON.stringify(response, null, 2);
-    }, function(err) {
-        console.log(err);
-        // console.log(err['0'].value.message);
-    });
+// model
+//     .get(["forces", "byName", ["lei"], ["id", "name"]])
+//     .then(function(response) {
+//         document.getElementById('forces-data').innerHTML = JSON.stringify(response, null, 2);
+//     }, function(err) {
+//         console.log(err);
+//         // console.log(err['0'].value.message);
+//     });
 
 // model
 //     .get(["forces", {from: 0, to: 3}, ["id", "name"]])
@@ -185,19 +166,19 @@ model
 
 
 //// getting to people via force.neighbourhood
-// model
-//     .get(
-//         ["forces", {from: 0, to: 5}, ["id","name","neighbourhoods"], {from: 0, to: 2},["people"],{from: 0, to: 1}, ["bio", "name", "rank"]],
-//         ["forces", {from: 8, to: 10}, ["id","name", "neighbourhoods"], {from: 0, to: 2},["people"],{from: 0, to: 1}, ["bio", "name", "rank"]])
-// //,"latitude", "longitude", "type", "population"]])
-//     .then(function(response) {
-//         console.log('got response', response);
-//         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
-//     }, function(err) {
-//         console.log('error', err);
-//         document.getElementById('forces-data3').innerHTML = "<h3>Error</h3>" + JSON.stringify(err, null, 2);
-//         // console.log(err['0'].value.message);
-//     });
+model
+    .get(
+        ["forces", {from: 0, to: 5}, ["id","name","neighbourhoods"], {from: 0, to: 2},["people"],{from: 0, to: 1}, ["bio", "name", "rank"]],
+        ["forces", {from: 8, to: 10}, ["id","name", "neighbourhoods"], {from: 0, to: 2},["people"],{from: 0, to: 1}, ["bio", "name", "rank"]])
+//,"latitude", "longitude", "type", "population"]])
+    .then(function(response) {
+        console.log('got response', response);
+        document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);
+    }, function(err) {
+        console.log('error', err);
+        document.getElementById('forces-data3').innerHTML = "<h3>Error</h3>" + JSON.stringify(err, null, 2);
+        // console.log(err['0'].value.message);
+    });
 
 // GOOD! locations work directly
 // model
@@ -239,9 +220,10 @@ var first6 = {from: 0, to: 5};
 //         // console.log(err['0'].value.message);
 //     });
 
+// // step 2 - include description
 // model
 //     .get(
-//         ["forces", {from: 0, to: 5}, ["name", "description", "id"]])
+//         ["forces", {from: 0, to: 5}, ["name", "id", "description"]])
 //      //   ["forces", {from: 0, to: 5}, ["engagement_methods"], ["url"]])
 //     .then(function(response) {
 //         document.getElementById('forces-data3').innerHTML = JSON.stringify(response, null, 2);

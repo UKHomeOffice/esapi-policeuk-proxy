@@ -114,7 +114,7 @@ app.use('/model.json', falcorExpress.dataSourceRoute(function(req, res) {
                     var searchTerms = pathset[2];
                     var ret = [];
                     searchTerms.forEach(function(searchTerm) {
-                        resp.map(function(force) {
+                        resp.forEach(function(force) {
                             if (force.id.includes(searchTerm))
                             {
                                 var path = {
